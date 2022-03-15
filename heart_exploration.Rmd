@@ -1,0 +1,78 @@
+---
+title: "Heart Exploration"
+author: "lizzie"
+date: "October 19, 2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+**Libraries**
+
+```{r}
+library(corrplot)
+```
+
+**Read .csv**
+
+```{r}
+df <- read.csv("Heart_Disease_Prediction.csv")
+
+df$Heart_Disease <- as.numeric(df$Heart_Disease)-1
+
+
+```
+
+
+**Look at dataset**
+
+```{r}
+
+summary(df)
+
+```
+**Target Variable Counts**
+```{r}
+table(df$Heart_Disease)
+```
+
+**Using Histograms**
+```{r}
+par(mfrow=c(2,7))
+
+for (i in 1:14){
+  hist(df[,i], main=names(df[i]))
+}
+
+
+```
+Some of these features are categorical. Some features are normally distributed, and some features are skewed.
+
+**Selecting Features using Pairwise correlation graph**
+
+```{r}
+correlations <- cor(df[,1:14])
+
+corrplot(correlations,method = 'circle')
+
+```
+
+Looks like 'Thallium', 'vessels_fluro','Chest', and 'ST_depression' are good indicators.
+
+**Using Histogram to visualize the four features**
+
+```{r}
+
+layout(matrix(1:4, nrow = 1))
+
+features <- c('Thallium', 'vessels_fluro','Chest', 'ST_depression')
+
+df <- df[features]
+
+for (i in 1:4){
+  hist(df[,i], main=names(df[i]))
+}
+
+
+```
+'Thallium', 'vessels_fluro', and 'Chest' are categorical variables. 'ST_depression' is continous. No need for extreme scaling; all of the variables are within the range of 0 to 10. All histograms are skewed.

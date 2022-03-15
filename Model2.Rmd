@@ -1,0 +1,124 @@
+
+---
+title: "Model2"
+author: "lizzie"
+date: "October 19, 2021"
+output: pdf_document
+---
+**Load Libraries**
+
+```{r}
+library(caTools)
+```
+
+**Read .csv**
+
+```{r}
+heart <- read.csv("Heart_Disease_Prediction.csv")
+
+```
+
+**Format Data**
+
+```{r}
+
+heart$Heart_Disease <- as.numeric(heart$Heart_Disease)-1
+
+```
+
+***~Model Building~***
+
+**Train test split**
+
+```{r}
+set.seed(100)
+
+split <- sample.split(heart$Heart_Disease, SplitRatio = 0.7)
+
+train <- subset(heart,split == TRUE)
+
+test <- subset(heart, split == FALSE)
+
+```
+
+**Build Model2 \& Get Coefficients**
+
+```{r}
+
+model2 <- glm(Heart_Disease~Thallium + vessels_fluro 
+              + Chest + ST_depression, data=train, family = binomial("logit"))
+
+model2$coefficients
+
+
+```
+
+***~End of Model Building~***
+
+**Predictions**
+
+```{r}
+
+model2_predictions <- predict(model2, newdata = test, type = "response")
+
+model2_predictions[1:5]
+
+
+```
+**Confusion Matrix**
+
+```{r}
+
+conf <- table(test$Heart_Disease, model2_predictions >= 0.5)
+
+conf
+```
+
+
+**Confusion Matrix Results**
+
+```{r}
+true_negative = conf[1]
+false_negative = conf[2]
+false_positive = conf[3]
+true_positive = conf[4]
+
+```
+
+
+```{r}
+
+paste("accuracy: ",(true_positive+true_negative)/nrow(test)) 
+#overall accuracy of the prediction
+paste("sensitivity: ", true_positive/(true_positive+false_negative))
+#probability of a positive test, given that the patient is ill
+paste("specificity: ", true_negative/(true_negative+false_positive)) 
+#probability of a negative test given that the patient is well
+
+
+```
+
+```{r}
+summary(model2)
+```
+
+**Load Libraries**
+
+```{r}
+library(pROC)
+```
+
+**ROC**
+
+```{r}
+ROC_1 <- roc(test$Heart_Disease, c(model1_predictions))
+ROC_2 <- roc(test$Heart_Disease, model2_predictions)
+# Area Under Curve (AUC) for each ROC curve (higher -> better)
+ROC_1_auc <- auc(ROC_1)
+ROC_2_auc <- auc(ROC_2)
+# plot ROC curves
+plot(ROC_1, col = "red", main = "ROC For model1 (RED) vs model2 (BLUE)")
+lines(ROC_2, col = "blue", lty=2)
+paste("Area under curve of models: ", ROC_1_auc)
+
+```

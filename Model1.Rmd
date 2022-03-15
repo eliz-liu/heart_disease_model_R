@@ -1,0 +1,192 @@
+---
+title: "Model1"
+author: "lizzie"
+date: "November 3, 2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+**Load Libraries**
+
+```{r}
+library(caTools)
+library(pROC)
+library(tidyverse)
+```
+
+**Read .csv**
+
+```{r}
+heart <- read.csv("Heart_Disease_Prediction.csv")
+
+```
+
+**Format Data**
+
+```{r}
+heart$Heart_Disease <- as.numeric(heart$Heart_Disease)-1
+```
+
+***~Model Building~***
+
+**Split Samples into Test and Train Data**
+
+```{r}
+
+set.seed(100)
+
+split <- sample.split(heart$Heart_Disease, SplitRatio = 0.7)
+
+train <- subset(heart,split == TRUE)
+
+test <- subset(heart, split == FALSE)
+
+
+
+
+```
+
+**intialize X, y, and \theta**
+
+```{r}
+
+vars_4 <- c('Thallium', 'vessels_fluro','Chest','ST_depression')
+
+X <- train[vars_4]
+y <- train['Heart_Disease']
+
+#add theta_0 term and convert to matrix
+temp <- cbind(y, X)
+X <- mutate(temp[, -1], intercept =1)
+X <- as.matrix(X[,c(ncol(X), 1:(ncol(X)-1))])
+y <- as.matrix(temp[, 1])
+
+theta <- matrix(rep(0, ncol(X)), nrow = ncol(X))
+
+
+```
+
+**Create Sigmoid Function**
+
+```{r}
+
+#sigmoid function, inverse of logit
+sigmoid <- function(z){1/(1+exp(-z))}
+
+
+```
+
+**Create Cost Function**
+
+```{r}
+
+#cost function
+cost <- function(theta, X, y){
+  m <- length(y) # number of training examples
+
+  h <- sigmoid(X %*% theta)
+  J <- (t(-y)%*%log(h)-t(1-y)%*%log(1-h))/m
+  J
+}
+
+```
+
+**Create Gradient Function**
+
+```{r}
+
+#gradient function
+grad <- function(theta, X, y){
+  m <- length(y) 
+
+  h <- sigmoid(X%*%theta)
+  grad <- (t(X)%*%(h - y))/m
+  grad
+}
+
+```
+
+**Build Model & Return Coefficients**
+
+```{r}
+
+#use the optim function to perform gradient descent
+model1 <- optim(theta, fn = cost, gr = grad, X = X, y = y)
+ 
+#return coefficients
+model1$par
+
+model1_theta <- data.frame(
+ 
+  intercept = model1$par[1], 
+
+  Thallium = model1$par[2], 
+
+  vessels_fluro = model1$par[3],
+  
+  Chest = model1$par[4],
+    
+  ST_depression = model1$par[5]
+
+  
+)
+model1_theta
+```
+***~End of Model Building~***
+
+**Predictions from the Model using Test Data**
+
+```{r}
+
+theta <- as.matrix(model1$par[2:5])
+  
+b <- model1$par[1]
+
+X_test <- as.matrix(test[vars_4])
+
+Y_test <- as.matrix(test$Heart_Disease)
+
+z <- (X_test %*% theta) + b
+
+model1_predictions <- sigmoid(z)
+
+model1_predictions[1:5]
+
+
+```
+
+**Confusion Matrix**
+
+```{r}
+conf <- table(Y_test, model1_predictions >= 0.5)
+
+conf
+
+```
+
+*Confusion Matrix Results**
+
+```{r}
+true_negative = conf[1]
+false_negative = conf[2]
+false_positive = conf[3]
+true_positive = conf[4]
+
+```
+
+
+```{r}
+
+paste("accuracy: ",(true_positive+true_negative)/nrow(test)) 
+#overall accuracy of the prediction
+paste("sensitivity: ", true_positive/(true_positive+false_negative))
+#probability of a positive test, given that the patient is ill
+paste("specificity: ", true_negative/(true_negative+false_positive)) 
+#probability of a negative test given that the patient is well
+
+
+```
+
+
+

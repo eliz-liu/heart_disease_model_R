@@ -1,0 +1,26 @@
+---
+title: "ROC graph"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+**Load Libraries**
+
+```{r}
+library(pROC)
+```
+
+**ROC**
+
+```{r}
+ROC_1 <- roc(test$Heart_Disease, c(model1_predictions))
+ROC_2 <- roc(test$Heart_Disease, model2_predictions)
+# Area Under Curve (AUC) for each ROC curve (higher -> better)
+ROC_1_auc <- auc(ROC_1)
+ROC_2_auc <- auc(ROC_2)
+# plot ROC curves
+plot(ROC_1, col = "red", main = "ROC For model1 (RED) vs model2 (BLUE)")
+lines(ROC_2, col = "blue", lty=2)
+paste("Area under curve of models: ", ROC_1_auc)
+
+```
